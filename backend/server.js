@@ -1,0 +1,13 @@
+import express from 'express';
+import cors from 'cors';
+import { pathToFileURL } from 'node:url';
+import { logger } from './middleware/http.js';
+import api from './routes/api.js';
+export const app = express();
+app.use(logger);
+app.use(cors({ exposedHeaders: ['Allow', 'WWW-Authenticate'] }));
+app.use(express.json());
+app.use('/api', api);
+app.use((req, res) => res.status(404).json({ status: 404, error: 'Not Found', message: 'Endpoint not found' }));
+app.use((err, req, res, next) => res.status(err.status || 500).json({ status: err.status || 500, error: err.status === 400 ? 'Bad Request' : 'Internal Server Error', message: err.status === 400 ? 'Malformed JSON request' : 'An unexpected server error occurred' }));
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) app.listen(process.env.PORT || 5000, '0.0.0.0', () => console.log('Race Control listening on 0.0.0.0:' + (process.env.PORT || 5000)));
